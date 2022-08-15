@@ -199,6 +199,22 @@ func TestEval5(t *testing.T) {
 	A7:=A1 AND A2 AND A3 AND A4 AND A5;
 	`
 
+	str = `
+	A1 := MA(CLOSE, 3)
+	A2 := BARSCOUNT(CLOSE)
+	A3 := HHV(CLOSE, 3)
+	A4 := LLV(CLOSE, 4)
+	A5 := SMA(CLOSE, 3, 1)
+	`
+
+	str = `
+	CC := C;
+	TT := BARSCOUNT(CC);
+	HP := (HHV(CC,TT)-LLV(CC,TT)/CC)<0.05
+	YY := SMA(VOL,30,1);
+	FL := (YY-LLV(LLV(YY,1),30))/(HHV(HHV(YY,1),30)-LLV(LLV(YY,1),30))>0.95;
+	`
+
 	l := newlexer(str)
 	p := newparser(l)
 	program := p.parseprogram()
@@ -265,17 +281,12 @@ func TestEval6(t *testing.T) {
 
 	// 策略
 	str := `
-	A1:=(REF(HIGH,1)-MAX(REF(CLOSE,1),REF(OPEN,1)))/(REF(HIGH,1)-REF(LOW,1))*100>50;
-	A2:=(MIN(OPEN,CLOSE)-LOW)/(HIGH-LOW)*100>50;
-	A3:=ABS(CLOSE-REF(CLOSE,1))/MIN(CLOSE,REF(CLOSE,1))*100<2;
-	A4:=REF(CLOSE,2)>REF(CLOSE,3);
-	A5:=VOL<REF(VOL,1);
-	A7:=A1 AND A2 AND A3 AND A4 AND A5;
+	CC := CLOSE;
+	TT := BARSCOUNT(CC);
+	HP := (HHV(CC,TT)-LLV(CC,TT)/CC)<0.05
+	YY := SMA(VOL,30,1);
+	FL := (YY-LLV(LLV(YY,1),30))/(HHV(HHV(YY,1),30)-LLV(LLV(YY,1),30))>0.95;
 	`
-
-	//str = `
-	//	rst:=REF(CLOSE,1)<REF(OPEN,1) AND CLOSE>OPEN AND CLOSE<REF(OPEN,1) AND OPEN>REF(CLOSE,1);
-	//	`
 
 	l := newlexer(str)
 	p := newparser(l)
@@ -288,23 +299,14 @@ func TestEval6(t *testing.T) {
 
 	evaluated := eval(program, env)
 
-	fmt.Println("中间值:")
-	//for k, v := range env.store {
-	//fmt.Println("变量名:", k, ", 变量值:", v.inspect())
-	//}
-
+	fmt.Println(evaluated)
 	fmt.Println("结果:")
-	//fmt.Println(evaluated.inspect())
 
 	for i, ele := range evaluated.(*arrayobj).elements {
 		if ele.(*booleanobj).value {
 			fmt.Println(i,
-				"A1:", env.store["A1"].(*arrayobj).elements[i],
-				"A2:", env.store["A2"].(*arrayobj).elements[i],
-				"A3:", env.store["A3"].(*arrayobj).elements[i],
-				"A4:", env.store["A4"].(*arrayobj).elements[i],
-				"A5:", env.store["A5"].(*arrayobj).elements[i],
-				"A7:", env.store["A7"].(*arrayobj).elements[i])
+				"FL:", env.store["FL"].(*arrayobj).elements[i],
+			)
 		}
 	}
 }

@@ -1,18 +1,24 @@
 package l
 
-import "math"
+import (
+	"math"
+)
 
 // 内置函数
 var builtins = map[string]*builtinfnobj{
-	"IF":    {fn: builtin_fn_if},
-	"REF":   {fn: builtin_fn_ref},
-	"COUNT": {fn: builtin_fn_count},
-	"MAX":   {fn: builtin_fn_max},
-	"MIN":   {fn: builtin_fn_min},
-	"ABS":   {fn: builtin_fn_abs},
-	"EVERY": {fn: builtin_fn_every}, // TODO test
-	"EXIST": {fn: builtin_fn_exist}, // TODO test
-	// HHV LLV MA CROSS LAST
+	"IF":        {fn: builtin_fn_if},
+	"REF":       {fn: builtin_fn_ref},
+	"COUNT":     {fn: builtin_fn_count},
+	"MAX":       {fn: builtin_fn_max},
+	"MIN":       {fn: builtin_fn_min},
+	"ABS":       {fn: builtin_fn_abs},
+	"EVERY":     {fn: builtin_fn_every},
+	"EXIST":     {fn: builtin_fn_exist},
+	"MA":        {fn: builtin_fn_ma},
+	"BARSCOUNT": {fn: builtin_fn_barscount},
+	"HHV":       {fn: builtin_fn_hhv},
+	"LLV":       {fn: builtin_fn_llv},
+	"SMA":       {fn: builtin_fn_sma},
 }
 
 func builtin_fn_if(args ...obj) obj {
@@ -228,6 +234,180 @@ func builtin_fn_min(args ...obj) obj {
 			return &floatobj{value: math.Min(arg0.tofloat64().value, arg1.tofloat64().value)}
 		})
 	return fn(args...)
+}
+
+func builtin_fn_ma(args ...obj) obj {
+	if len(args) != 2 {
+		return newerror("`ma` func args length does'nt match, now %d, want %d", len(args), 2)
+	}
+
+	arg0 := args[0] // 第一个参数
+	arg1 := args[1] // 第二个参数
+
+	if arg0.tYpe() != ARRAY_OBJ {
+		return newerror("`ma` func 0th argument must be array")
+	}
+
+	if arg1.tYpe() != INTEGER_OBJ {
+		return newerror("`ma` func 1th argument must be integer")
+	}
+
+	rst_array_obj := arrayobj{elements: make([]obj, len(arg0.(*arrayobj).elements))}
+
+	for i := range arg0.(*arrayobj).elements {
+		start_i := i - int(arg1.(*integerobj).value)
+		if start_i < 0 {
+			start_i = 0
+		}
+		end_i := i
+		var totol_i float64 = 0
+		for j := start_i; j <= end_i; j++ {
+			totol_i += arg0.(*arrayobj).elements[j].tofloat64().value
+		}
+		rst_array_obj.elements[i] = &floatobj{value: totol_i / arg1.tofloat64().value}
+	}
+
+	return &rst_array_obj
+}
+
+func builtin_fn_barscount(args ...obj) obj {
+	if len(args) != 1 {
+		return newerror("`barscount` func args length does'nt match, now %d, want %d", len(args), 1)
+	}
+
+	arg0 := args[0] // 第一个参数
+
+	if arg0.tYpe() != ARRAY_OBJ {
+		return newerror("`barscount` func 0th argument must be array")
+	}
+
+	return &integerobj{value: int64(len(arg0.(*arrayobj).elements))}
+}
+
+func builtin_fn_hhv(args ...obj) obj {
+	if len(args) != 2 {
+		return newerror("`hhv` func args length does'nt match, now %d, want %d", len(args), 2)
+	}
+
+	arg0 := args[0] // 第一个参数
+	arg1 := args[1] // 第二个参数
+
+	if arg0.tYpe() != ARRAY_OBJ {
+		return newerror("`hhv` func 0th argument must be array")
+	}
+
+	if arg1.tYpe() != INTEGER_OBJ {
+		return newerror("`hhv` func 1th argument must be integer")
+	}
+
+	rst_array_obj := arrayobj{elements: make([]obj, len(arg0.(*arrayobj).elements))}
+
+	for i := range arg0.(*arrayobj).elements {
+		start_i := i - int(arg1.(*integerobj).value)
+		if start_i < 0 {
+			start_i = 0
+		}
+		end_i := i
+		var max float64 = arg0.(*arrayobj).elements[start_i].tofloat64().value
+		for j := start_i; j <= end_i; j++ {
+			if arg0.(*arrayobj).elements[j].tofloat64().value > max {
+				max = arg0.(*arrayobj).elements[j].tofloat64().value
+			}
+		}
+		rst_array_obj.elements[i] = &floatobj{value: max}
+	}
+
+	return &rst_array_obj
+}
+
+func builtin_fn_llv(args ...obj) obj {
+	if len(args) != 2 {
+		return newerror("`hhv` func args length does'nt match, now %d, want %d", len(args), 2)
+	}
+
+	arg0 := args[0] // 第一个参数
+	arg1 := args[1] // 第二个参数
+
+	if arg0.tYpe() != ARRAY_OBJ {
+		return newerror("`hhv` func 0th argument must be array")
+	}
+
+	if arg1.tYpe() != INTEGER_OBJ {
+		return newerror("`hhv` func 1th argument must be integer")
+	}
+
+	rst_array_obj := arrayobj{elements: make([]obj, len(arg0.(*arrayobj).elements))}
+
+	for i := range arg0.(*arrayobj).elements {
+		start_i := i - int(arg1.(*integerobj).value)
+		if start_i < 0 {
+			start_i = 0
+		}
+		end_i := i
+		var min float64 = arg0.(*arrayobj).elements[start_i].tofloat64().value
+		for j := start_i; j <= end_i; j++ {
+			if arg0.(*arrayobj).elements[j].tofloat64().value < min {
+				min = arg0.(*arrayobj).elements[j].tofloat64().value
+			}
+		}
+		rst_array_obj.elements[i] = &floatobj{value: min}
+	}
+
+	return &rst_array_obj
+}
+
+func builtin_fn_sma(args ...obj) obj {
+	if len(args) != 3 {
+		return newerror("`sma` func args length does'nt match, now %d, want %d", len(args), 3)
+	}
+
+	arg0 := args[0] // 第一个参数
+	arg1 := args[1] // 第二个参数
+	arg2 := args[2] // 第三个参数
+
+	if arg0.tYpe() != ARRAY_OBJ {
+		return newerror("`sma` func 0th argument must be array")
+	}
+
+	if arg1.tYpe() != INTEGER_OBJ {
+		return newerror("`sma` func 1th argument must be integer")
+	}
+
+	if arg2.tYpe() != INTEGER_OBJ {
+		return newerror("`sma` func 2th argument must be integer")
+	}
+
+	rst_array_obj := arrayobj{elements: make([]obj, len(arg0.(*arrayobj).elements))}
+	rst_len := len(rst_array_obj.elements)
+
+	if arg1.(*integerobj).value < 2 {
+		for i := 0; i < rst_len; i++ {
+			rst_array_obj.elements[i] = &integerobj{value: 0}
+		}
+		return &rst_array_obj
+	}
+
+	pre_sma_value := &floatobj{value: 0}
+	for i := 0; i < rst_len; i++ {
+		if i == 0 {
+			rst_array_obj.elements[i] = arg0.(*arrayobj).elements[i].tofloat64()
+		} else {
+			arg0_i_value := arg0.(*arrayobj).elements[i]
+
+			if !arg0_i_value.isnumberic() {
+				return newerror("`sma` func 0th argument this position is not numberic: %d", i)
+			}
+
+			arg0_i_float_value := arg0.(*arrayobj).elements[i].tofloat64().value
+
+			v := (arg0_i_float_value*arg2.tofloat64().value + (arg1.tofloat64().value-arg2.tofloat64().value)*pre_sma_value.value) / arg1.tofloat64().value
+			rst_array_obj.elements[i] = &floatobj{value: v}
+		}
+
+		pre_sma_value = rst_array_obj.elements[i].(*floatobj)
+	}
+
+	return &rst_array_obj
 }
 
 // 根据类型取各类型零值
